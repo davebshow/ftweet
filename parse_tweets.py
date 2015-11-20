@@ -115,3 +115,4 @@ def parse_tweets(infiles, tweetfile, tagfile, userfile, edgefile):
     tweetfile.close()
     edgefile.close()
     tagfile.close()
+    userfile.close()
