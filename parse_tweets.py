@@ -56,6 +56,34 @@ def parse_tweets(infiles, tweetfile, tagfile, userfile, edgefile):
                 rt_status = tweet.get("retweeted_status", "")
                 if rt_status:
                     rt_id = rt_status["id"]
+                    rt_user_id = rt_status["user"]["id"]
+                    rt_user_screen_name = rt_status["user"]["screen_name"]
+                    rt_text = rt_status["text"]
+                    rt_created_at = rt_status["created_at"]
+                    rt_place = rt_status["place"]
+                    rt_lang = rt_status["lang"]
+                    rt_clean_text, rt_polarity, rt_subjectivity = get_sent(
+                        rt_text, rt_lang)
+                    rt_country_code = ""
+                    rt_country = ""
+                    rt_full_name = ""
+                    rt_name = ""
+                    rt_coordinates = ""
+                    if rt_place:
+                        rt_country_code = rt_place["country_code"]
+                        rt_country = rt_place["country"]
+                        rt_full_name = rt_place["full_name"]
+                        rt_name = rt_place["name"]
+                        rt_coordinates = rt_place["bounding_box"]["coordinates"]
+                        rt_coordinates = ",".join(
+                            str(x) for x in chain.from_iterable(coordinates))
+                    rt_row = [rt_id, rt_lang, rt_name, rt_text, rt_clean_text,
+                              rt_polarity, rt_subjectivity, rt_created_at,
+                              rt_full_name, rt_country, rt_country_code,
+                              rt_coordinates]
+                    tweet_writer.writerow(rt_row)
+                    edge_writer.writerow([rt_user_id, rt_id, "tweets"])
+                    user_dict[rt_user_screen_name] = rt_user_id
                 place = tweet["place"]
                 if place:
                     country_code = place["country_code"]
@@ -65,21 +93,7 @@ def parse_tweets(infiles, tweetfile, tagfile, userfile, edgefile):
                     coordinates = place["bounding_box"]["coordinates"]
                     coordinates = ",".join(
                         str(x) for x in chain.from_iterable(coordinates))
-                clean_text = ' '.join(filter(
-                    lambda x: (x[0] != "@" and x[0] != "#" and x != "RT"
-                               and not x.startswith("http") and not
-                               x.startswith("https")), text.split()))
-                if lang == "en":
-                    blob = TextBlob(clean_text)
-                    sent = blob.sentiment
-                elif lang == "fr":
-                    blob = TextBlob(
-                        clean_text, pos_tagger=PatternTagger(),
-                        analyzer=PatternAnalyzer())
-                    sent = blob.sentiment
-                else:
-                    sent = ("", "")
-                polarity, subjectivity = sent
+                clean_text, polarity, subjectivity = get_sent(text, lang)
 
                 # write out the nodes
                 row = [tid, lang, name, text, clean_text, polarity,
@@ -116,3 +130,21 @@ def parse_tweets(infiles, tweetfile, tagfile, userfile, edgefile):
     edgefile.close()
     tagfile.close()
     userfile.close()
+
+
+def get_sent(text, lang):
+    clean_text = ' '.join(filter(
+        lambda x: (x[0] != "@" and x[0] != "#" and x != "RT"
+                   and not x.startswith("http") and not
+                   x.startswith("https")), text.split()))
+    if lang == "en":
+        blob = TextBlob(clean_text)
+        sent = blob.sentiment
+    elif lang == "fr":
+        blob = TextBlob(
+            clean_text, pos_tagger=PatternTagger(),
+            analyzer=PatternAnalyzer())
+        sent = blob.sentiment
+    else:
+        sent = ("", "")
+    return clean_text, sent[0], sent[1]
