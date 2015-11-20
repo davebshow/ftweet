@@ -17,15 +17,16 @@ def parse_tweets(infiles, tweetfile, tagfile, userfile, edgefile):
     ht_dict = {}
     ht_id_counter = 1
     user_dict = {}
-    tweet_header = ["id", "lang", "name", "text", "clean_text", "polarity",
-                    "subjectivity", "created_at", "full_name",
-                    "country", "country_code", "coordinates"]
+    rt_ids = set()
+    tweet_header = ["tid:ID", "lang", "name", "text", "clean_text", "polarity:float",
+                    "subjectivity:float", "created_at", "full_name",
+                    "country", "country_code", "coordinates", ":LABEL"]
     tweet_writer.writerow(tweet_header)
-    edge_header = ["source", "target", "label"]
+    edge_header = [":START_ID", ":END_ID", ":TYPE"]
     edge_writer.writerow(edge_header)
-    tag_header = ["id", "hashtag"]
+    tag_header = ["tagid:ID", "hashtag", ":LABEL"]
     tag_writer.writerow(tag_header)
-    user_header = ["id", "screen_name"]
+    user_header = ["uid:ID", "screen_name", ":LABEL"]
     user_writer.writerow(user_header)
     for infile in infiles:
         with open(infile, "r") as f:
@@ -33,12 +34,12 @@ def parse_tweets(infiles, tweetfile, tagfile, userfile, edgefile):
             for line in f:
                 tweet = json.loads(line)
                 try:
-                    text = tweet["text"]
+                    text = tweet["text"].replace('"', "")
                 except KeyError:
                     continue
                 if "paris" not in text.lower():
                     continue
-                user_id = tweet["user"]["id"]
+                user_id = str(tweet["user"]["id"])
                 screen_name = tweet["user"]["screen_name"]
                 user_dict[screen_name] = user_id
                 rt_id = ""
@@ -47,7 +48,7 @@ def parse_tweets(infiles, tweetfile, tagfile, userfile, edgefile):
                 full_name = ""
                 name = ""
                 coordinates = ""
-                tid = tweet["id"]
+                tid = str(tweet["id"])
                 replies_to = tweet["in_reply_to_status_id"]
                 created_at = tweet["created_at"]
                 hashtags = tweet["entities"]["hashtags"]
@@ -55,33 +56,45 @@ def parse_tweets(infiles, tweetfile, tagfile, userfile, edgefile):
                 lang = tweet["lang"]
                 rt_status = tweet.get("retweeted_status", "")
                 if rt_status:
-                    rt_id = rt_status["id"]
-                    rt_user_id = rt_status["user"]["id"]
-                    rt_user_screen_name = rt_status["user"]["screen_name"]
-                    rt_text = rt_status["text"]
-                    rt_created_at = rt_status["created_at"]
-                    rt_place = rt_status["place"]
-                    rt_lang = rt_status["lang"]
-                    rt_clean_text, rt_polarity, rt_subjectivity = get_sent(
-                        rt_text, rt_lang)
-                    rt_country_code = ""
-                    rt_country = ""
-                    rt_full_name = ""
-                    rt_name = ""
-                    rt_coordinates = ""
-                    if rt_place:
-                        rt_country_code = rt_place["country_code"]
-                        rt_country = rt_place["country"]
-                        rt_full_name = rt_place["full_name"]
-                        rt_name = rt_place["name"]
-                        rt_coordinates = rt_place["bounding_box"]["coordinates"]
-                        rt_coordinates = ",".join(
-                            str(x) for x in chain.from_iterable(coordinates))
-                    rt_row = [rt_id, rt_lang, rt_name, rt_text, rt_clean_text,
-                              rt_polarity, rt_subjectivity, rt_created_at,
-                              rt_full_name, rt_country, rt_country_code,
-                              rt_coordinates]
-                    tweet_writer.writerow(rt_row)
+                    rt_id = str(rt_status["id"])
+                    if rt_id not in rt_ids:
+                        rt_ids.add(rt_id)
+                        rt_user_id = rt_status["user"]["id"]
+                        rt_user_screen_name = rt_status["user"]["screen_name"]
+                        rt_text = rt_status["text"].replace('"', "")
+                        rt_created_at = rt_status["created_at"]
+                        rt_place = rt_status["place"]
+                        rt_lang = rt_status["lang"]
+                        rt_clean_text, rt_polarity, rt_subjectivity = get_sent(
+                            rt_text, rt_lang)
+                        rt_country_code = ""
+                        rt_country = ""
+                        rt_full_name = ""
+                        rt_name = ""
+                        rt_coordinates = ""
+                        if rt_place:
+                            rt_country_code = rt_place["country_code"]
+                            rt_country = rt_place["country"]
+                            rt_full_name = rt_place["full_name"]
+                            rt_name = rt_place["name"]
+                            rt_coordinates = rt_place["bounding_box"]["coordinates"]
+                            rt_coordinates = ",".join(
+                                str(x) for x in chain.from_iterable(coordinates))
+                        rt_row = [
+                            rt_id,
+                            rt_lang,
+                            rt_name,
+                            rt_text,
+                            rt_clean_text,
+                            rt_polarity,
+                            rt_subjectivity,
+                            rt_created_at,
+                            rt_full_name,
+                            rt_country,
+                            rt_country_code,
+                            rt_coordinates,
+                            "tweet"]
+                        tweet_writer.writerow(rt_row)
                     edge_writer.writerow([rt_user_id, rt_id, "tweets"])
                     user_dict[rt_user_screen_name] = rt_user_id
                 place = tweet["place"]
@@ -96,9 +109,20 @@ def parse_tweets(infiles, tweetfile, tagfile, userfile, edgefile):
                 clean_text, polarity, subjectivity = get_sent(text, lang)
 
                 # write out the nodes
-                row = [tid, lang, name, text, clean_text, polarity,
-                       subjectivity, created_at, full_name,
-                       country, country_code, coordinates]
+                row = [
+                    tid,
+                    lang,
+                    name,
+                    text,
+                    clean_text,
+                    polarity,
+                    subjectivity,
+                    created_at,
+                    full_name,
+                    country,
+                    country_code,
+                    coordinates,
+                    "tweet"]
                 tweet_writer.writerow(row)
 
                 # write out edges
@@ -110,7 +134,7 @@ def parse_tweets(infiles, tweetfile, tagfile, userfile, edgefile):
                 for hashtag in hashtags:
                     hashtag = hashtag["text"]
                     if hashtag not in ht_dict:
-                        ht_id = ht_id_counter
+                        ht_id = "h{}".format(ht_id_counter)
                         ht_dict[hashtag] = ht_id
                         ht_id_counter += 1
                     else:
@@ -123,9 +147,9 @@ def parse_tweets(infiles, tweetfile, tagfile, userfile, edgefile):
                     edge_writer.writerow([tid, uid, "mentions"])
 
     for k, v in ht_dict.items():
-        tag_writer.writerow([v, k])
+        tag_writer.writerow([v, k, "hashtag"])
     for k, v in user_dict.items():
-        user_writer.writerow([v, k])
+        user_writer.writerow([v, k, "user"])
     tweetfile.close()
     edgefile.close()
     tagfile.close()
@@ -135,8 +159,7 @@ def parse_tweets(infiles, tweetfile, tagfile, userfile, edgefile):
 def get_sent(text, lang):
     clean_text = ' '.join(filter(
         lambda x: (x[0] != "@" and x[0] != "#" and x != "RT"
-                   and not x.startswith("http") and not
-                   x.startswith("https")), text.split()))
+                   and not x.startswith("http")), text.split()))
     if lang == "en":
         blob = TextBlob(clean_text)
         sent = blob.sentiment
