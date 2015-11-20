@@ -40,6 +40,7 @@ def parse_tweets(infiles, tweetfile, tagfile, edgefile):
                 name = ""
                 coordinates = ""
                 tid = tweet["id"]
+                replies_to = tweet["in_reply_to_status_id"]
                 created_at = tweet["created_at"]
                 hashtags = tweet["entities"]["hashtags"]
                 lang = tweet["lang"]
@@ -80,6 +81,8 @@ def parse_tweets(infiles, tweetfile, tagfile, edgefile):
                 # write out edges
                 if rt_id:
                     edge_writer.writerow([rt_id, tid])
+                if replies_to:
+                    edge_writer.writerow([tid, replies_to])
                 for hashtag in hashtags:
                     hashtag = hashtag["text"]
                     if hashtag not in ht_dict:
