@@ -148,8 +148,11 @@ def parse_tweets(infiles, tweetfile, tagfile, userfile, edgefile):
 
     for k, v in ht_dict.items():
         tag_writer.writerow([v, k, "hashtag"])
+    new_user_dict = {}
     for k, v in user_dict.items():
-        user_writer.writerow([v, k, "user"])
+        new_user_dict[v] = k
+    for k, v in new_user_dict.items():
+        user_writer.writerow([k, v, "user"])
     tweetfile.close()
     edgefile.close()
     tagfile.close()
