@@ -7,13 +7,13 @@ from textblob_fr import PatternTagger, PatternAnalyzer
 
 def parse_tweets(infiles, tweetfile, tagfile, userfile, edgefile):
     tweetfile = open(tweetfile, "w")
-    tweet_writer = csv.writer(tweetfile)
+    tweet_writer = csv.writer(tweetfile, delimiter='\t')
     edgefile = open(edgefile, "w")
-    edge_writer = csv.writer(edgefile)
+    edge_writer = csv.writer(edgefile, delimiter='\t')
     tagfile = open(tagfile, "w")
-    tag_writer = csv.writer(tagfile)
+    tag_writer = csv.writer(tagfile, delimiter='\t')
     userfile = open(userfile, "w")
-    user_writer = csv.writer(userfile)
+    user_writer = csv.writer(userfile, delimiter='\t')
     ht_dict = {}
     ht_id_counter = 1
     user_dict = {}
@@ -34,7 +34,7 @@ def parse_tweets(infiles, tweetfile, tagfile, userfile, edgefile):
             for line in f:
                 tweet = json.loads(line)
                 try:
-                    text = tweet["text"].replace('"', "")
+                    text = tweet["text"].replace('"', "").replace("\\", "").replace("/", "")
                 except KeyError:
                     continue
                 if "paris" not in text.lower():
@@ -61,7 +61,7 @@ def parse_tweets(infiles, tweetfile, tagfile, userfile, edgefile):
                         rt_ids.add(rt_id)
                         rt_user_id = rt_status["user"]["id"]
                         rt_user_screen_name = rt_status["user"]["screen_name"]
-                        rt_text = rt_status["text"].replace('"', "")
+                        rt_text = rt_status["text"].replace('"', "").replace("\\", "").replace("/", "")
                         rt_created_at = rt_status["created_at"]
                         rt_place = rt_status["place"]
                         rt_lang = rt_status["lang"]
