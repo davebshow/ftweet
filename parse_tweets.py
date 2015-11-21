@@ -93,7 +93,7 @@ def parse_tweets(infiles, tweetfile, tagfile, userfile, edgefile):
                         rt_country_code,
                         rt_coordinates,
                         "tweet"]
-                    tweet_dict["rt_id"] = rt_row
+                    tweet_dict[rt_id] = rt_row
                     edge_writer.writerow([rt_user_id, rt_id, "TWEETS"])
                     user_dict[rt_user_id] = rt_user_screen_name
                 place = tweet["place"]
