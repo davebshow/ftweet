@@ -17,7 +17,7 @@ def parse_tweets(infiles, tweetfile, tagfile, userfile, edgefile):
     ht_dict = {}
     ht_id_counter = 1
     user_dict = {}
-    rt_ids = set()
+    tids = set()
     tweet_header = ["tid:ID", "lang", "name", "text", "clean_text", "polarity:float",
                     "subjectivity:float", "created_at", "full_name",
                     "country", "country_code", "coordinates", ":LABEL"]
@@ -34,21 +34,21 @@ def parse_tweets(infiles, tweetfile, tagfile, userfile, edgefile):
             for line in f:
                 tweet = json.loads(line)
                 try:
-                    text = tweet["text"].replace('"', "").replace("\\", "").replace("/", "")
+                    text = tweet["text"].replace('"', "'").replace("\\", "")
                 except KeyError:
                     continue
                 if "paris" not in text.lower():
                     continue
+                tid = str(tweet["id"])
                 user_id = str(tweet["user"]["id"])
                 screen_name = tweet["user"]["screen_name"]
-                user_dict[screen_name] = user_id
+                user_dict[user_id] = screen_name
                 rt_id = ""
                 country_code = ""
                 country = ""
                 full_name = ""
                 name = ""
                 coordinates = ""
-                tid = str(tweet["id"])
                 replies_to = tweet["in_reply_to_status_id"]
                 created_at = tweet["created_at"]
                 hashtags = tweet["entities"]["hashtags"]
@@ -59,9 +59,9 @@ def parse_tweets(infiles, tweetfile, tagfile, userfile, edgefile):
                     rt_id = str(rt_status["id"])
                     if rt_id not in rt_ids:
                         rt_ids.add(rt_id)
-                        rt_user_id = rt_status["user"]["id"]
+                        rt_user_id = str(rt_status["user"]["id"])
                         rt_user_screen_name = rt_status["user"]["screen_name"]
-                        rt_text = rt_status["text"].replace('"', "").replace("\\", "").replace("/", "")
+                        rt_text = rt_status["text"].replace('"', "'").replace("\\", "")
                         rt_created_at = rt_status["created_at"]
                         rt_place = rt_status["place"]
                         rt_lang = rt_status["lang"]
@@ -95,8 +95,8 @@ def parse_tweets(infiles, tweetfile, tagfile, userfile, edgefile):
                             rt_coordinates,
                             "tweet"]
                         tweet_writer.writerow(rt_row)
-                    edge_writer.writerow([rt_user_id, rt_id, "tweets"])
-                    user_dict[rt_user_screen_name] = rt_user_id
+                    edge_writer.writerow([rt_user_id, rt_id, "TWEETS"])
+                    user_dict[rt_user_id] = rt_user_screen_name
                 place = tweet["place"]
                 if place:
                     country_code = place["country_code"]
@@ -126,11 +126,11 @@ def parse_tweets(infiles, tweetfile, tagfile, userfile, edgefile):
                 tweet_writer.writerow(row)
 
                 # write out edges
-                edge_writer.writerow([user_id, tid, "tweets"])
+                edge_writer.writerow([user_id, tid, "TWEETS"])
                 if rt_id:
-                    edge_writer.writerow([rt_id, tid, "retweets"])
+                    edge_writer.writerow([rt_id, tid, "RETWEETS"])
                 if replies_to:
-                    edge_writer.writerow([tid, replies_to, "replies_to"])
+                    edge_writer.writerow([tid, replies_to, "REPLIES_TO"])
                 for hashtag in hashtags:
                     hashtag = hashtag["text"]
                     if hashtag not in ht_dict:
@@ -139,19 +139,17 @@ def parse_tweets(infiles, tweetfile, tagfile, userfile, edgefile):
                         ht_id_counter += 1
                     else:
                         ht_id = ht_dict[hashtag]
-                    edge_writer.writerow([tid, ht_id, "uses"])
+                    edge_writer.writerow([tid, ht_id, "USES"])
                 for user_mention in user_mentions:
-                    uid = user_mention["id"]
+                    uid = str(user_mention["id"])
                     mention_screen_name = user_mention["screen_name"]
-                    user_dict[mention_screen_name] = uid
-                    edge_writer.writerow([tid, uid, "mentions"])
+                    user_dict[uid] = mention_screen_name
+                    edge_writer.writerow([tid, uid, "MENTIONS"])
 
     for k, v in ht_dict.items():
         tag_writer.writerow([v, k, "hashtag"])
-    new_user_dict = {}
+
     for k, v in user_dict.items():
-        new_user_dict[v] = k
-    for k, v in new_user_dict.items():
         user_writer.writerow([k, v, "user"])
     tweetfile.close()
     edgefile.close()
