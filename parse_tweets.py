@@ -17,7 +17,7 @@ def parse_tweets(infiles, tweetfile, tagfile, userfile, edgefile):
     ht_dict = {}
     ht_id_counter = 1
     user_dict = {}
-    tids = set()
+    tweet_dict = {}
     tweet_header = ["tid:ID", "lang", "name", "text", "clean_text", "polarity:float",
                     "subjectivity:float", "created_at", "full_name",
                     "country", "country_code", "coordinates", ":LABEL"]
@@ -57,44 +57,43 @@ def parse_tweets(infiles, tweetfile, tagfile, userfile, edgefile):
                 rt_status = tweet.get("retweeted_status", "")
                 if rt_status:
                     rt_id = str(rt_status["id"])
-                    if rt_id not in rt_ids:
-                        rt_ids.add(rt_id)
-                        rt_user_id = str(rt_status["user"]["id"])
-                        rt_user_screen_name = rt_status["user"]["screen_name"]
-                        rt_text = rt_status["text"].replace('"', "'").replace("\\", "")
-                        rt_created_at = rt_status["created_at"]
-                        rt_place = rt_status["place"]
-                        rt_lang = rt_status["lang"]
-                        rt_clean_text, rt_polarity, rt_subjectivity = get_sent(
-                            rt_text, rt_lang)
-                        rt_country_code = ""
-                        rt_country = ""
-                        rt_full_name = ""
-                        rt_name = ""
-                        rt_coordinates = ""
-                        if rt_place:
-                            rt_country_code = rt_place["country_code"]
-                            rt_country = rt_place["country"]
-                            rt_full_name = rt_place["full_name"]
-                            rt_name = rt_place["name"]
-                            rt_coordinates = rt_place["bounding_box"]["coordinates"]
-                            rt_coordinates = ",".join(
-                                str(x) for x in chain.from_iterable(coordinates))
-                        rt_row = [
-                            rt_id,
-                            rt_lang,
-                            rt_name,
-                            rt_text,
-                            rt_clean_text,
-                            rt_polarity,
-                            rt_subjectivity,
-                            rt_created_at,
-                            rt_full_name,
-                            rt_country,
-                            rt_country_code,
-                            rt_coordinates,
-                            "tweet"]
-                        tweet_writer.writerow(rt_row)
+
+                    rt_user_id = str(rt_status["user"]["id"])
+                    rt_user_screen_name = rt_status["user"]["screen_name"]
+                    rt_text = rt_status["text"].replace('"', "'").replace("\\", "")
+                    rt_created_at = rt_status["created_at"]
+                    rt_place = rt_status["place"]
+                    rt_lang = rt_status["lang"]
+                    rt_clean_text, rt_polarity, rt_subjectivity = get_sent(
+                        rt_text, rt_lang)
+                    rt_country_code = ""
+                    rt_country = ""
+                    rt_full_name = ""
+                    rt_name = ""
+                    rt_coordinates = ""
+                    if rt_place:
+                        rt_country_code = rt_place["country_code"]
+                        rt_country = rt_place["country"]
+                        rt_full_name = rt_place["full_name"]
+                        rt_name = rt_place["name"]
+                        rt_coordinates = rt_place["bounding_box"]["coordinates"]
+                        rt_coordinates = ",".join(
+                            str(x) for x in chain.from_iterable(coordinates))
+                    rt_row = [
+                        rt_id,
+                        rt_lang,
+                        rt_name,
+                        rt_text,
+                        rt_clean_text,
+                        rt_polarity,
+                        rt_subjectivity,
+                        rt_created_at,
+                        rt_full_name,
+                        rt_country,
+                        rt_country_code,
+                        rt_coordinates,
+                        "tweet"]
+                    tweet_dict["rt_id"] = rt_row
                     edge_writer.writerow([rt_user_id, rt_id, "TWEETS"])
                     user_dict[rt_user_id] = rt_user_screen_name
                 place = tweet["place"]
@@ -123,7 +122,7 @@ def parse_tweets(infiles, tweetfile, tagfile, userfile, edgefile):
                     country_code,
                     coordinates,
                     "tweet"]
-                tweet_writer.writerow(row)
+                tweet_dict[tid] = row
 
                 # write out edges
                 edge_writer.writerow([user_id, tid, "TWEETS"])
@@ -151,6 +150,10 @@ def parse_tweets(infiles, tweetfile, tagfile, userfile, edgefile):
 
     for k, v in user_dict.items():
         user_writer.writerow([k, v, "user"])
+
+    for v in tweet_dict.values():
+        tweet_writer.writerow(v)
+
     tweetfile.close()
     edgefile.close()
     tagfile.close()
