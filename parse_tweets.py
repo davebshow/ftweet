@@ -129,7 +129,10 @@ def parse_tweets(infiles, tweetfile, tagfile, userfile, edgefile):
                 if rt_id:
                     edge_writer.writerow([rt_id, tid, "RETWEETS"])
                 if replies_to:
+                    replies_to = str(replies_to)
                     edge_writer.writerow([tid, replies_to, "REPLIES_TO"])
+                    tweet_dict[replies_to] = [replies_to, "", "", "", "", 0.0,
+                                              0.0, "", "", "", "", "", "tweet"]
                 for hashtag in hashtags:
                     hashtag = hashtag["text"]
                     if hashtag not in ht_dict:
