@@ -96,10 +96,10 @@ def parse_tweets(infiles, tweetfile, tagfile, userfile, edgefile):
                         rt_country_code,
                         rt_coordinates,
                         "tweet"]
-		    if rt_id not in tweet_dict:
+                    if rt_id not in tweet_dict:
                         tweet_dict[rt_id] = rt_row
-		    elif not tweet_dict[rt_id][11]:
-		        tweet_dict[rt_id] = rt_row
+                    elif tweet_dict[rt_id][11] == "":
+                        tweet_dict[rt_id] = rt_row
                     edge_writer.writerow([rt_user_id, rt_id, "TWEETS"])
                     user_dict[rt_user_id] = rt_user_screen_name
                 if place:
@@ -129,7 +129,7 @@ def parse_tweets(infiles, tweetfile, tagfile, userfile, edgefile):
                     "tweet"]
                 if tid not in tweet_dict:
                     tweet_dict[tid] = row
-                elif not tweet_dict[tid][11]:
+                elif tweet_dict[tid][11] == "":
                     tweet_dict[tid] = row
 
                 # write out edges
@@ -139,9 +139,9 @@ def parse_tweets(infiles, tweetfile, tagfile, userfile, edgefile):
                 if replies_to:
                     replies_to = str(replies_to)
                     edge_writer.writerow([tid, replies_to, "REPLIES_TO"])
-		    if replies_to not in tweet_dict:
+                    if replies_to not in tweet_dict:
                         tweet_dict[replies_to] = [replies_to, "", "", "", "", "",
-                                                   "", "", "", "", "", "", "tweet"]
+                                                  "", "", "", "", "", "", "tweet"]
                 for hashtag in hashtags:
                     hashtag = hashtag["text"].lower()
                     if hashtag not in ht_dict:
