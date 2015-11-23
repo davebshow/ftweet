@@ -1,6 +1,5 @@
 import csv
 import json
-from itertools import chain
 from textblob import TextBlob
 from textblob_fr import PatternTagger, PatternAnalyzer
 
@@ -80,8 +79,7 @@ def parse_tweets(infiles, tweetfile, tagfile, userfile, edgefile):
                         rt_full_name = rt_place["full_name"]
                         rt_name = rt_place["name"]
                         rt_coordinates = rt_place["bounding_box"]["coordinates"]
-                        rt_coordinates = ",".join(
-                            str(x) for x in chain.from_iterable(coordinates))
+                        rt_coordinates = json.dumps(rt_coordinates)
                     rt_row = [
                         rt_id,
                         rt_lang,
@@ -108,8 +106,7 @@ def parse_tweets(infiles, tweetfile, tagfile, userfile, edgefile):
                     full_name = place["full_name"]
                     name = place["name"]
                     coordinates = place["bounding_box"]["coordinates"]
-                    coordinates = ",".join(
-                        str(x) for x in chain.from_iterable(coordinates))
+                    coordinates = json.dumps(coordinates)
                 clean_text, polarity, subjectivity = get_sent(text, lang)
 
                 # write out the nodes
