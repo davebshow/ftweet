@@ -4,7 +4,7 @@ from textblob import TextBlob
 from textblob_fr import PatternTagger, PatternAnalyzer
 
 
-def parse_tweets(infiles, tweetfile, tagfile, userfile, edgefile):
+def parse_tweets(infiles, tweetfile, tagfile, userfile, edgefile, kwrd):
     tweetfile = open(tweetfile, "w")
     tweet_writer = csv.writer(tweetfile, delimiter='\t')
     edgefile = open(edgefile, "w")
@@ -36,7 +36,7 @@ def parse_tweets(infiles, tweetfile, tagfile, userfile, edgefile):
                     text = tweet["text"].replace('"', "'").replace("\\", "")
                 except KeyError:
                     continue
-                if "paris" not in text.lower():
+                if kwrd not in text.lower():
                     continue
                 tid = str(tweet["id"])
                 user_id = str(tweet["user"]["id"])
