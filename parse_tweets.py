@@ -4,7 +4,7 @@ from textblob import TextBlob
 from textblob_fr import PatternTagger, PatternAnalyzer
 
 
-def parse_tweets(infiles, tweetfile, tagfile, userfile, edgefile, kwrd):
+def parse_tweets(infiles, tweetfile, tagfile, userfile, edgefile, kwrd_set):
     tweetfile = open(tweetfile, "w")
     tweet_writer = csv.writer(tweetfile, delimiter='\t')
     edgefile = open(edgefile, "w")
@@ -36,7 +36,9 @@ def parse_tweets(infiles, tweetfile, tagfile, userfile, edgefile, kwrd):
                     text = tweet["text"].replace('"', "'").replace("\\", "")
                 except KeyError:
                     continue
-                if kwrd not in text.lower():
+                # Hmmm this is a hack for the art tweets...
+                text_tokens = set(w.lstrip("#") for w in text.lower().split(' '))
+                if not kwrd_set & text_tokens:
                     continue
                 tid = str(tweet["id"])
                 user_id = str(tweet["user"]["id"])
