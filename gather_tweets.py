@@ -4,17 +4,12 @@ import time
 from TwitterAPI import TwitterAPI
 from TwitterAPI import TwitterConnectionError
 
-# Daves
-consumer_key = "S2kVYYW3ihDtPgOZg5Q"
-consumer_secret = "ERKZS7zBKQk36GjdNVpe9oMBCpRn0quho5K7tA0"
-access_token_key = "120258418-sFgDZ8K0V0hSSLfdRDlINXh2Ix5f7BkWJ3H3aXGU"
-access_token_secret = "SBXH3oNOv6J665naQbxQNPOpSDuiPjI9XwzioW3WE7Jb5"
 
+# consumer_key = "yourinfo"
+# consumer_secret = "yourinfo"
+# access_token_key = "yourinfo"
+# access_token_secret = "yourinfo"
 
-#consumer_key = "JyxWqhkAOrJMcmaYgLQrCl7Nk"
-#consumer_secret = "bZW1WDqmZIwNqmlpgbhPV8cGp1D7eK9VngGbFrqJQOKGYErIIr"
-#access_token_key = "178393959-CLHT5AEVrG74wDTqQ5NL5syj7yMnuFhWkSaqw4ZO"
-#access_token_secret = "Zd7BWn9u1LrbYxORi1sXA3STarcLcYI8cZPmSpl2opqDt"
 
 
 # This is the object that we will use to send the request to Twitter
